@@ -35,5 +35,7 @@ int main( void )
         zmq::message_t request;
         receiver.recv (&request);
         transmitter.send(request);
+        std::cout << nb_frames << '\r' << std::flush;
+        ++nb_frames;
     }
 }
