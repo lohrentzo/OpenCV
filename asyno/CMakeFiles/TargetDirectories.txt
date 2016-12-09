@@ -1,0 +1,6 @@
+/Users/mikifossati/Dropbox/mikenzo/asyno/CMakeFiles/rebuild_cache.dir
+/Users/mikifossati/Dropbox/mikenzo/asyno/CMakeFiles/cvboh.dir
+/Users/mikifossati/Dropbox/mikenzo/asyno/CMakeFiles/edit_cache.dir
+/Users/mikifossati/Dropbox/mikenzo/asyno/CMakeFiles/cvproc.dir
+/Users/mikifossati/Dropbox/mikenzo/asyno/CMakeFiles/ASYNO_CODECS.dir
+/Users/mikifossati/Dropbox/mikenzo/asyno/CMakeFiles/cvcap.dir
