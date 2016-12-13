@@ -20,4 +20,5 @@ executable asynohs
   build-depends:       base >= 4.7 && < 5
                      , bytestring
                      , zeromq4-haskell
-                     , random
+                     , opencv
+                     , async
