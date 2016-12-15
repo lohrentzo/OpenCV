@@ -14,8 +14,6 @@
 
 #include "codecs.hpp"
 
-cv::String window_name = "Ciaone proprio";
-
 int main( void )
 {
     zmq::context_t context (1);
@@ -57,17 +55,8 @@ int main( void )
         vec2msg(buff, &request); 
         transmitter.send (request);
         zmq::message_t reply;
-        receiver.recv (&reply);
-        std::vector<uchar> rep(reply.size());
-        memcpy(rep.data(), reply.data(), reply.size());
-        cv::Mat newframe = cv::imdecode(rep, cv::IMREAD_UNCHANGED);
         std::cout << nb_frames << '\r' << std::flush;
         ++nb_frames;
-
-        cv::imshow( window_name, newframe );
-
-        int c = cv::waitKey(10);
-        if( (char)c == 27 ) { break; } // escape
     }
     return 0;
 }

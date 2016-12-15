@@ -1,6 +1,5 @@
 //
-//  cvboh.cpp
-//  Bilateral Object Handler
+//  cvdisplay.cpp
 //  
 //  Project asyno
 //
@@ -9,13 +8,16 @@
 //
 #include "zmq.hpp"
 #include <iostream>
+#include "opencv2/opencv.hpp"
+
+cv::String window_name = "Ciaone proprio";
 
 int main( void )
 {
     zmq::context_t context (1);
     zmq::socket_t transmitter (context, ZMQ_PUSH);
     zmq::socket_t receiver (context, ZMQ_PULL);
-    transmitter.connect ("tcp://127.0.0.1:5553");
+    transmitter.connect ("tcp://127.0.0.1:5552");
     receiver.bind ("tcp://*:5554");
     std::cout << "Cvproc server starting..." << std::endl;
 
@@ -32,9 +34,17 @@ int main( void )
     unsigned nb_frames = 0;
 
     while (true) {
-        zmq::message_t request;
-        receiver.recv (&request);
-        transmitter.send(request);
+        zmq::message_t buffer;
+        receiver.recv (&buffer);
+        std::vector<uchar> buf(buffer.size());
+        memcpy(buf.data(), buffer.data(), buffer.size());
+        cv::Mat frame = cv::imdecode(buf, cv::IMREAD_UNCHANGED);
+
+        cv::imshow( window_name, frame );
+
+        int c = cv::waitKey(10);
+        if( (char)c == 27 ) { break; } // escape
+
         std::cout << nb_frames << '\r' << std::flush;
         ++nb_frames;
     }

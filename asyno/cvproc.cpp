@@ -17,20 +17,28 @@
 int main () {
     //  Prepare our context and sockets
     zmq::context_t context (1);
-    zmq::socket_t transmitter (context, ZMQ_PUSH);
-    zmq::socket_t receiver (context, ZMQ_PULL);
-    transmitter.connect ("tcp://127.0.0.1:5554");
-    receiver.bind ("tcp://*:5555");
+    zmq::socket_t trToDis (context, ZMQ_PUSH);
+    zmq::socket_t recFromDis (context, ZMQ_PULL);
+    trToDis.connect ("tcp://127.0.0.1:5554");
+    recFromDis.bind ("tcp://*:5552");
+    zmq::socket_t trToCap (context, ZMQ_PUSH);
+    zmq::socket_t recFromCap (context, ZMQ_PULL);
+    trToCap.connect ("tcp://127.0.0.1:5553");
+    recFromCap.bind ("tcp://*:5555");
     std::cout << "Cvproc server starting..." << std::endl;
 
 // Waiting for zero...
     zmq::message_t zero;
-    std::cout << "Waiting for zero..." << std::endl;
-    receiver.recv (&zero);
+    std::cout << "cvProc: waiting for zero from cvCap..." << std::endl;
+    recFromCap.recv (&zero);
     zmq::message_t answer(1);
     memcpy(answer.data(), "0", 1);
-    transmitter.send(answer);
-    std::cout << "Zero received! Ready to go..." << std::endl;
+    trToCap.send(answer);
+    std::cout << "cvProc: zero received!" << std::endl;
+    std::cout << "cvProc: waiting for zero from cvDis..." << std::endl;
+    recFromDis.recv (&zero);
+    trToDis.send(answer);
+    std::cout << "cvProc: ok, zero received, we're ready to go." << std::endl;
 // Ok, zero received, we're ready to go.
 
     unsigned nb_frames = 0;
@@ -39,7 +47,7 @@ int main () {
         zmq::message_t request;
 
         //  Wait for next request from client
-        receiver.recv (&request);
+        recFromCap.recv (&request);
         if (request.size() == 1)
         {
             std::string req = std::string(static_cast<char*>(request.data()), request.size());
@@ -49,7 +57,7 @@ int main () {
                 nb_frames = 0;
                 zmq::message_t answer(1);
                 memcpy(answer.data(), "0", 1);
-                transmitter.send(answer);
+                trToDis.send(answer);
             }
         }
         else
@@ -75,7 +83,7 @@ int main () {
 
             zmq::message_t reply;
             vec2msg(buff, &reply);
-            transmitter.send (reply);
+            trToDis.send (reply);
             std::cout << "Processed frame " << nb_frames << '\r' << std::flush;
             ++nb_frames;
         }
