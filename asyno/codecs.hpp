@@ -11,7 +11,7 @@
 #define ASYNO_CODECS
 
 #include "zmq.hpp"
-#include "opencv2/opencv.hpp"
+#include <opencv2/opencv.hpp>
 
 void vec2msg(std::vector<uchar> buf, zmq::message_t *ret);
 

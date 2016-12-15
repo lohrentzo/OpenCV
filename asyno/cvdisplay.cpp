@@ -8,7 +8,7 @@
 //
 #include "zmq.hpp"
 #include <iostream>
-#include "opencv2/opencv.hpp"
+#include <opencv2/opencv.hpp>
 
 cv::String window_name = "Ciaone proprio";
 
