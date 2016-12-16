@@ -70,15 +70,13 @@ int main () {
         else
         {
 // Process the buffer
-            //std::vector<uchar> req(request.size());
-            //memcpy(req.data(), request.data(), request.size());
-            uint8_t *req;
             size_t req_size = request.size() * sizeof(u_int8_t);
-            memcpy(req, request.data(), req_size);
-            cv::Mat* frame = asyno_decode_frame(req, req_size, decoder);
-            //cv::Mat frame = cv::imdecode(req, cv::IMREAD_UNCHANGED);
-            
-/*            cv::Mat gray;
+            std::vector<uchar> req(request.size());
+            memcpy(req.data(), request.data(), request.size());
+            cv::Mat* frame = asyno_decode_frame(req.data(), req_size, decoder);
+
+/*            
+            cv::Mat gray;
             cvtColor(*frame, gray, CV_BGR2GRAY);
             
             cv::Ptr<cv::FastFeatureDetector> fast = cv::FastFeatureDetector::create(10, false);
@@ -89,21 +87,15 @@ int main () {
             cv::Mat rich;
             drawKeypoints(gray, kp, rich, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
 */            
-            //std::vector<uchar> buff;
-            //cv::imencode(".png", rich, buff);
-
             int len = 0;
             uint8_t* bytes = asyno_encode_frame(frame, encoder, &len);
             if (len > 0) {
                 zmq::message_t reply (len);
                 memcpy(reply.data (), bytes, len);
                 trToDis.send (reply);
+                std::cout << "Processed frame " << nb_frames << '\r' << std::flush;
+                ++nb_frames;
             }
-            else {
-                std::cout << "NO PANIC!" << std::endl;
-            }
-            std::cout << "Processed frame " << nb_frames << '\r' << std::flush;
-            ++nb_frames;
         }
     }
     return 0;

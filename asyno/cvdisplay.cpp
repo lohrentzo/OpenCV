@@ -43,12 +43,11 @@ int main( void )
     while (true) {
         zmq::message_t buffer;
         receiver.recv (&buffer);
-        std::cout << "Packet received! Ready to decode " << buffer.size() << std::endl;
+//        std::cout << "Packet received! Ready to decode " << buffer.size() << std::endl;
 
         size_t buf_size = buffer.size() * sizeof(u_int8_t);
         std::vector<uchar> buf(buffer.size());
-        memcpy(buf.data(), buffer.data(), buffer.size());
-      
+        memcpy(buf.data(), buffer.data(), buffer.size());     
         cv::Mat* frame = asyno_decode_frame(buf.data(), buf_size, decoder);
         if (frame) {
           cv::imshow( window_name, *frame );

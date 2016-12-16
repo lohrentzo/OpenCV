@@ -29,8 +29,8 @@ int main( void )
     cap.set(CV_CAP_PROP_FRAME_HEIGHT, dst_height);
 
     std::cout << "Connecting to server..." << std::endl;
-    transmitter.connect ("tcp://127.0.0.1:5554");
-    receiver.bind ("tcp://*:5552");
+    transmitter.connect ("tcp://127.0.0.1:5555");
+    receiver.bind ("tcp://*:5553");
 
     cap.open( 0 );
     if(!cap.isOpened()) { std::cout << "--(!)Error opening video capture\n" << std::endl; return -1; }
@@ -59,8 +59,6 @@ int main( void )
             break;
         }
 
-        //std::vector<uchar> buff;
-        //cv::imencode(".png", frame, buff);
         int len = 0;
         uint8_t* bytes = asyno_encode_frame(&frame, encoder, &len);
         if (len > 0) {
@@ -68,14 +66,9 @@ int main( void )
             zmq::message_t request (len);
             memcpy(request.data (), bytes, len);
             transmitter.send (request);
+            std::cout << nb_frames << '\r' << std::flush;
+            ++nb_frames;
         }
-        else {
-            std::cout << "NO PANIC!" << std::endl;
-        }
-        //zmq::message_t request;
-        //vec2msg(buff, &request);
-        std::cout << nb_frames << '\r' << std::flush;
-        ++nb_frames;
     }
     return 0;
 }
