@@ -43,9 +43,10 @@ int main( void )
     while (true) {
         zmq::message_t buffer;
         receiver.recv (&buffer);
-        uint8_t *req = reinterpret_cast<uint8_t*>(buffer.data());
-        memcpy(req, buffer.data(), buffer.size());
-        cv::Mat* frame = asyno_decode_frame(req, buffer.size(), decoder);
+        uint8_t *req;
+        size_t buf_size = buffer.size() * sizeof(u_int8_t);
+        memcpy(req, buffer.data(), buf_size);
+        cv::Mat* frame = asyno_decode_frame(req, buf_size, decoder);
         
         //std::vector<uchar> buf(buffer.size());
         //memcpy(buf.data(), buffer.data(), buffer.size());

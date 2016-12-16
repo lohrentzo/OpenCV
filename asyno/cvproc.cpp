@@ -72,9 +72,10 @@ int main () {
 // Process the buffer
             //std::vector<uchar> req(request.size());
             //memcpy(req.data(), request.data(), request.size());
-            uint8_t *req = reinterpret_cast<uint8_t*>(request.data());
-            memcpy(req, request.data(), request.size());
-            cv::Mat* frame = asyno_decode_frame(req, request.size(), decoder);
+            uint8_t *req;
+            size_t req_size = request.size() * sizeof(u_int8_t);
+            memcpy(req, request.data(), req_size);
+            cv::Mat* frame = asyno_decode_frame(req, req_size, decoder);
             //cv::Mat frame = cv::imdecode(req, cv::IMREAD_UNCHANGED);
             
 /*            cv::Mat gray;
@@ -98,7 +99,9 @@ int main () {
                 memcpy(reply.data (), bytes, len);
                 trToDis.send (reply);
             }
-
+            else {
+                std::cout << "NO PANIC!" << std::endl;
+            }
             std::cout << "Processed frame " << nb_frames << '\r' << std::flush;
             ++nb_frames;
         }

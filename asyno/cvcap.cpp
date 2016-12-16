@@ -29,11 +29,11 @@ int main( void )
     cap.set(CV_CAP_PROP_FRAME_HEIGHT, dst_height);
 
     std::cout << "Connecting to server..." << std::endl;
-    transmitter.connect ("tcp://127.0.0.1:5555");
-    receiver.bind ("tcp://*:5553");
+    transmitter.connect ("tcp://127.0.0.1:5554");
+    receiver.bind ("tcp://*:5552");
 
     cap.open( 0 );
-    if(!cap.isOpened()) { printf("--(!)Error opening video capture\n"); return -1; }
+    if(!cap.isOpened()) { std::cout << "--(!)Error opening video capture\n" << std::endl; return -1; }
 
 // Sending 0 and waiting for answer
     zmq::message_t zero(1);
@@ -55,7 +55,7 @@ int main( void )
     {
         if( frame.empty() )
         {
-            printf(" --(!) No captured frame -- Break!");
+            std::cout << " --(!) No captured frame -- Break!" << std::endl;
             break;
         }
 
@@ -67,6 +67,9 @@ int main( void )
             zmq::message_t request (len);
             memcpy(request.data (), bytes, len);
             transmitter.send (request);
+        }
+        else {
+            std::cout << "NO PANIC!" << std::endl;
         }
         //zmq::message_t request;
         //vec2msg(buff, &request); 
