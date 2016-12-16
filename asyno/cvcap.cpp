@@ -13,14 +13,20 @@
 #include <opencv2/opencv.hpp>
 
 #include "codecs.hpp"
+#include "ffcodecs.hpp"
 
 int main( void )
 {
     zmq::context_t context (1);
     zmq::socket_t transmitter (context, ZMQ_PUSH);
     zmq::socket_t receiver (context, ZMQ_PULL);
+
+    const int dst_width = 1280;
+    const int dst_height = 720;
+
     cv::VideoCapture cap;
-    cv::Mat frame;
+    cap.set(CV_CAP_PROP_FRAME_WIDTH, dst_width);
+    cap.set(CV_CAP_PROP_FRAME_HEIGHT, dst_height);
 
     std::cout << "Connecting to server..." << std::endl;
     transmitter.connect ("tcp://127.0.0.1:5555");
@@ -40,6 +46,10 @@ int main( void )
 // Ok, answer received, we're good to go
 
     unsigned nb_frames = 0;
+    asyno_codec_init();
+    std::vector<uint8_t> imgbuf(dst_height * dst_width * 3 + 16);
+    cv::Mat frame(dst_height, dst_width, CV_8UC3, imgbuf.data(), dst_width * 3);
+    AsynoCodecContext* encoder = asyno_create_encoder_context(AVCodecID::AV_CODEC_ID_H264, dst_width, dst_height);
 
     while (  cap.read(frame) )
     {
@@ -49,12 +59,17 @@ int main( void )
             break;
         }
 
-        std::vector<uchar> buff;
-        cv::imencode(".png", frame, buff);
-        zmq::message_t request;
-        vec2msg(buff, &request); 
-        transmitter.send (request);
-        zmq::message_t reply;
+        //std::vector<uchar> buff;
+        //cv::imencode(".png", frame, buff);
+        int len = 0;
+        uint8_t* bytes = asyno_encode_frame(&frame, encoder, &len);
+        if (len > 0) {
+            zmq::message_t request (len);
+            memcpy(request.data (), bytes, len);
+            transmitter.send (request);
+        }
+        //zmq::message_t request;
+        //vec2msg(buff, &request); 
         std::cout << nb_frames << '\r' << std::flush;
         ++nb_frames;
     }

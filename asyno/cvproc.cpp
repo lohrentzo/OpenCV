@@ -13,6 +13,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "codecs.hpp"
+#include "ffcodecs.hpp"
 
 int main () {
     //  Prepare our context and sockets
@@ -26,6 +27,9 @@ int main () {
     trToCap.connect ("tcp://127.0.0.1:5553");
     recFromCap.bind ("tcp://*:5555");
     std::cout << "Cvproc server starting..." << std::endl;
+
+    const int dst_width = 1280;
+    const int dst_height = 720;
 
 // Waiting for zero...
     zmq::message_t zero;
@@ -42,6 +46,9 @@ int main () {
 // Ok, zero received, we're ready to go.
 
     unsigned nb_frames = 0;
+    asyno_codec_init();
+    AsynoCodecContext* encoder = asyno_create_encoder_context(AVCodecID::AV_CODEC_ID_H264, dst_width, dst_height);
+    AsynoCodecContext* decoder = asyno_create_decoder_context(AVCodecID::AV_CODEC_ID_H264, dst_width, dst_height);
 
     while (true) {
         zmq::message_t request;
@@ -63,12 +70,15 @@ int main () {
         else
         {
 // Process the buffer
-            std::vector<uchar> req(request.size());
-            memcpy(req.data(), request.data(), request.size());
-            cv::Mat frame = cv::imdecode(req, cv::IMREAD_UNCHANGED);
+            //std::vector<uchar> req(request.size());
+            //memcpy(req.data(), request.data(), request.size());
+            uint8_t *req = reinterpret_cast<uint8_t*>(request.data());
+            memcpy(req, request.data(), request.size());
+            cv::Mat* frame = asyno_decode_frame(req, request.size(), decoder);
+            //cv::Mat frame = cv::imdecode(req, cv::IMREAD_UNCHANGED);
             
-            cv::Mat gray;
-            cvtColor(frame, gray, CV_BGR2GRAY);
+/*            cv::Mat gray;
+            cvtColor(*frame, gray, CV_BGR2GRAY);
             
             cv::Ptr<cv::FastFeatureDetector> fast = cv::FastFeatureDetector::create(10, false);
             std::vector<cv::KeyPoint> kp;
@@ -77,13 +87,18 @@ int main () {
             
             cv::Mat rich;
             drawKeypoints(gray, kp, rich, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-            
-            std::vector<uchar> buff;
-            cv::imencode(".png", rich, buff);
+*/            
+            //std::vector<uchar> buff;
+            //cv::imencode(".png", rich, buff);
 
-            zmq::message_t reply;
-            vec2msg(buff, &reply);
-            trToDis.send (reply);
+            int len = 0;
+            uint8_t* bytes = asyno_encode_frame(frame, encoder, &len);
+            if (len > 0) {
+                zmq::message_t reply (len);
+                memcpy(reply.data (), bytes, len);
+                trToDis.send (reply);
+            }
+
             std::cout << "Processed frame " << nb_frames << '\r' << std::flush;
             ++nb_frames;
         }
