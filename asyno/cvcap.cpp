@@ -1,7 +1,7 @@
 //
 //  cvcap.cpp
 //  Frame Capture
-//  
+//
 //  Project asyno
 //
 //  Miki Fossati and Lorenzo Benoni 09/12/2016.
@@ -64,6 +64,7 @@ int main( void )
         int len = 0;
         uint8_t* bytes = asyno_encode_frame(&frame, encoder, &len);
         if (len > 0) {
+            std::cout << "OK PANIC! (" << len << ")" << std::endl;
             zmq::message_t request (len);
             memcpy(request.data (), bytes, len);
             transmitter.send (request);
@@ -72,7 +73,7 @@ int main( void )
             std::cout << "NO PANIC!" << std::endl;
         }
         //zmq::message_t request;
-        //vec2msg(buff, &request); 
+        //vec2msg(buff, &request);
         std::cout << nb_frames << '\r' << std::flush;
         ++nb_frames;
     }

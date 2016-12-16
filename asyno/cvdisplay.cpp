@@ -1,6 +1,6 @@
 //
 //  cvdisplay.cpp
-//  
+//
 //  Project asyno
 //
 //  Miki Fossati and Lorenzo Benoni 09/12/2016.
@@ -43,16 +43,17 @@ int main( void )
     while (true) {
         zmq::message_t buffer;
         receiver.recv (&buffer);
-        uint8_t *req;
-        size_t buf_size = buffer.size() * sizeof(u_int8_t);
-        memcpy(req, buffer.data(), buf_size);
-        cv::Mat* frame = asyno_decode_frame(req, buf_size, decoder);
-        
-        //std::vector<uchar> buf(buffer.size());
-        //memcpy(buf.data(), buffer.data(), buffer.size());
-        //cv::Mat frame = cv::imdecode(buf, cv::IMREAD_UNCHANGED);
+        std::cout << "Packet received! Ready to decode " << buffer.size() << std::endl;
 
-        cv::imshow( window_name, *frame );
+        size_t buf_size = buffer.size() * sizeof(u_int8_t);
+        std::vector<uchar> buf(buffer.size());
+        memcpy(buf.data(), buffer.data(), buffer.size());
+      
+        cv::Mat* frame = asyno_decode_frame(buf.data(), buf_size, decoder);
+        if (frame) {
+          cv::imshow( window_name, *frame );
+          delete frame;
+        }
 
         int c = cv::waitKey(10);
         if( (char)c == 27 ) { break; } // escape
