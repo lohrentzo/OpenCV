@@ -25,8 +25,8 @@ int main( void )
     const int dst_height = 720;
 
     cv::VideoCapture cap;
-    cap.set(CV_CAP_PROP_FRAME_WIDTH, dst_width);
-    cap.set(CV_CAP_PROP_FRAME_HEIGHT, dst_height);
+    cap.set(cv::CAP_PROP_FRAME_WIDTH, dst_width);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, dst_height);
 
     std::cout << "Connecting to server..." << std::endl;
     transmitter.connect ("tcp://127.0.0.1:5555");
