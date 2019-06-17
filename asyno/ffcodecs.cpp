@@ -138,9 +138,9 @@ uint8_t *asyno_encode_frame(cv::Mat *frame, AsynoCodecContext *context, int *len
     }
     // allocate frame buffer for encoding
     context->frame = av_frame_alloc();
-    std::vector<uint8_t> framebuf(av_image_get_buffer_size(context->codec_context->pix_fmt, context->codec_context->width, context->codec_context->height, 1));
+    std::vector<uint8_t> framebuf(av_image_get_buffer_size(context->codec_context->pix_fmt, context->codec_context->width, context->codec_context->height, 32));
     // avpicture_fill(reinterpret_cast<AVPicture *>(context->frame), framebuf.data(), context->codec_context->pix_fmt, context->codec_context->width, context->codec_context->height);
-    av_image_fill_arrays(context->frame->data, context->frame->linesize, framebuf.data(), context->codec_context->pix_fmt, context->codec_context->width, context->codec_context->height, 1);
+    av_image_fill_arrays(context->frame->data, context->frame->linesize, framebuf.data(), context->codec_context->pix_fmt, context->codec_context->width, context->codec_context->height, 32);
     context->frame->width = context->codec_context->width;
     context->frame->height = context->codec_context->height;
     context->frame->format = static_cast<int>(context->codec_context->pix_fmt);
@@ -153,7 +153,8 @@ uint8_t *asyno_encode_frame(cv::Mat *frame, AsynoCodecContext *context, int *len
   if (frame == NULL)
   {
     //  avcodec_encode_video2(context->codec_context, &context->pkt, nullptr, &got_pkt);
-    avcodec_receive_frame(context->codec_context, context->frame);
+    avcodec_send_frame(context->codec_context, context->frame);
+    avcodec_receive_packet(context->codec_context, &context->pkt);
     return NULL;
   }
 
@@ -171,7 +172,8 @@ uint8_t *asyno_encode_frame(cv::Mat *frame, AsynoCodecContext *context, int *len
   if (len)
     *len = 0;
   //int ret = avcodec_encode_video2(context->codec_context, &context->pkt, context->frame, &got_pkt);
-  int ret = avcodec_receive_frame(context->codec_context, context->frame);
+  avcodec_send_frame(context->codec_context, context->frame);
+  int ret = avcodec_receive_packet(context->codec_context, &context->pkt);
   if (ret == 0)
   {
     retbuf = context->pkt.data;
@@ -186,7 +188,8 @@ cv::Mat *asyno_decode_frame(uint8_t *bytes, int len, AsynoCodecContext *context)
   if (bytes == NULL)
   {
     //    avcodec_decode_video2(context->codec_context, context->frame, &got_frame, NULL);
-    avcodec_send_packet(context->codec_context, NULL);
+    avcodec_send_packet(context->codec_context, &context->pkt);
+    avcodec_receive_frame(context->codec_context, context->frame);
     return NULL;
   }
 
@@ -202,9 +205,9 @@ cv::Mat *asyno_decode_frame(uint8_t *bytes, int len, AsynoCodecContext *context)
     context->frame = av_frame_alloc();
   }
 
-  std::vector<uint8_t> framebuf(av_image_get_buffer_size(context->codec_context->pix_fmt, context->codec_context->width, context->codec_context->height, 1));
+  std::vector<uint8_t> framebuf(av_image_get_buffer_size(context->codec_context->pix_fmt, context->codec_context->width, context->codec_context->height, 32));
   //avpicture_fill(reinterpret_cast<AVPicture *>(context->frame), framebuf.data(), context->codec_context->pix_fmt, context->codec_context->width, context->codec_context->height);
-  av_image_fill_arrays(context->frame->data, context->frame->linesize, framebuf.data(), context->codec_context->pix_fmt, context->codec_context->width, context->codec_context->height, 1);
+  av_image_fill_arrays(context->frame->data, context->frame->linesize, framebuf.data(), context->codec_context->pix_fmt, context->codec_context->width, context->codec_context->height, 32);
   context->frame->width = context->codec_context->width;
   context->frame->height = context->codec_context->height;
   context->frame->format = static_cast<int>(context->codec_context->pix_fmt);
@@ -215,20 +218,22 @@ cv::Mat *asyno_decode_frame(uint8_t *bytes, int len, AsynoCodecContext *context)
   av_init_packet(&pkt);
 
   //  int ret = avcodec_decode_video2(context->codec_context, context->frame, &got_frame, &pkt);
-  int ret = avcodec_send_packet(context->codec_context, &pkt);
+  avcodec_send_packet(context->codec_context, &pkt);
+  int ret = avcodec_receive_frame(context->codec_context, context->frame);
   if (ret < 0)
     return NULL;
 
   int w = context->codec_context->width;
   int h = context->codec_context->height;
 
-  AVFrame *dst = av_frame_alloc();
+  AVFrame dst;
   cv::Mat *decoded_image = new cv::Mat(h, w, CV_8UC3);
-  //  dst->data[0] = (uint8_t *)decoded_image->data;
+  dst.data[0] = (uint8_t *)decoded_image->data;
 
-  av_image_fill_arrays(dst->data, dst->linesize, (uint8_t *)decoded_image->data, AV_PIX_FMT_BGR24, w, h, 1);
+  // avpicture_fill( (AVPicture *)&dst, dst.data[0], AV_PIX_FMT_BGR24, w, h);
+  av_image_fill_arrays((&dst)->data, (&dst)->linesize, dst.data[0], AV_PIX_FMT_BGR24, w, h, 32);
   SwsContext *convert_ctx = sws_getContext(w, h, context->codec_context->pix_fmt, w, h, AV_PIX_FMT_BGR24, SWS_FAST_BILINEAR, NULL, NULL, NULL);
-  sws_scale(convert_ctx, context->frame->data, context->frame->linesize, 0, h, dst->data, dst->linesize);
+  sws_scale(convert_ctx, context->frame->data, context->frame->linesize, 0, h, (&dst)->data, (&dst)->linesize);
   return decoded_image;
 }
 
