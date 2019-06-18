@@ -62,7 +62,7 @@ int main( void )
         int len = 0;
         uint8_t* bytes = asyno_encode_frame(&frame, encoder, &len);
         if (len > 0) {
-            std::cout << "OK PANIC! (" << len << ")" << std::endl;
+//            std::cout << "OK PANIC! (" << len << ")" << std::endl;
             zmq::message_t request (len);
             memcpy(request.data (), bytes, len);
             transmitter.send (request);

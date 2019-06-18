@@ -174,13 +174,12 @@ uint8_t *asyno_encode_frame(cv::Mat *frame, AsynoCodecContext *context, int *len
   //int ret = avcodec_encode_video2(context->codec_context, &context->pkt, context->frame, &got_pkt);
   avcodec_send_frame(context->codec_context, context->frame);
   int ret = avcodec_receive_packet(context->codec_context, &context->pkt);
-  retbuf = context->pkt.data;
-  /*if (ret < 0)
+  if (ret == 0)
   {
     retbuf = context->pkt.data;
     if (len)
       *len = context->pkt.size;
-  } */
+  }
   return retbuf;
 }
 
